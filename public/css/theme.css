@@ -1,0 +1,54 @@
+/* Cosmos Arogya — shared design tokens & base styles */
+:root{
+  --void:#06090b;
+  --surface:#0d1417;
+  --surface-2:#121a1e;
+  --line:rgba(232,242,240,0.09);
+  --text:#e8f2f0;
+  --text-dim:#8fa5a1;
+  --pulse:#3fe0c5;
+  --pulse-dim:rgba(63,224,197,0.35);
+  --violet:#7c86ff;
+  --amber:#ff9a6c;
+  --radius-card:18px;
+  --radius-pill:999px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--void);
+  color:var(--text);
+  font-family:'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.display{ font-family:'Fraunces', serif; }
+a{ color:inherit; }
+
+.btn{
+  font-family:inherit; font-size:15px; font-weight:500;
+  padding:13px 24px; border-radius:var(--radius-pill);
+  border:1px solid transparent; cursor:pointer;
+  display:inline-flex; align-items:center; gap:9px;
+  transition:transform 0.2s cubic-bezier(0.4,0,0.2,1), background 0.2s ease, border-color .2s ease;
+}
+.btn:focus-visible{ outline:2px solid var(--pulse); outline-offset:3px; }
+.btn-primary{ background:var(--pulse); color:#03211c; }
+.btn-primary:hover{ transform:translateY(-2px); background:#57e8d0; }
+.btn-ghost{ background:transparent; border-color:var(--line); color:var(--text); }
+.btn-ghost:hover{ border-color:var(--pulse-dim); transform:translateY(-2px); }
+.btn:disabled{ opacity:0.45; cursor:not-allowed; transform:none !important; }
+
+.wordmark{
+  display:flex; align-items:center; gap:10px;
+  font-family:'Fraunces', serif; font-weight:500; font-size:19px; letter-spacing:0.2px;
+  text-decoration:none; color:var(--text);
+}
+.wordmark .dot{
+  width:9px; height:9px; border-radius:50%;
+  background:var(--pulse);
+  box-shadow:0 0 12px 2px var(--pulse-dim);
+}
+
+@media (prefers-reduced-motion: reduce){ * { animation:none !important; transition:none !important; } }

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Cosmos Arogya — Your AI health companion</title>
+<meta name="theme-color" content="#06090b" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+  body{ overflow-x:hidden; }
+
+  /* faint clinical grid backdrop */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 85%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  header{
+    position:relative; z-index:2;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:24px clamp(20px,5vw,64px);
+    max-width:1280px; margin:0 auto;
+  }
+  #langSelect{
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 14px;
+    border-radius:var(--radius-pill);
+    font-family:inherit; font-size:14px;
+    cursor:pointer;
+  }
+
+  main{ position:relative; z-index:2; max-width:1280px; margin:0 auto; padding:0 clamp(20px,5vw,64px); }
+
+  .hero{
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:48px;
+    align-items:center;
+    padding:56px 0 40px;
+  }
+  @media (max-width: 880px){ .hero{ grid-template-columns:1fr; padding-top:24px; } }
+
+  .eyebrow-row{ display:flex; align-items:center; gap:8px; color:var(--text-dim); font-size:14px; margin-bottom:22px; }
+  .eyebrow-row svg{ width:15px; height:15px; opacity:0.85; }
+
+  h1.hero-title{
+    font-size:clamp(2.3rem, 5vw, 3.6rem);
+    line-height:1.08;
+    font-weight:500;
+    max-width:11ch;
+  }
+  .hero-sub{
+    margin-top:20px;
+    color:var(--text-dim);
+    font-size:17px;
+    line-height:1.6;
+    max-width:46ch;
+  }
+
+  .cta-row{ display:flex; gap:14px; margin-top:34px; flex-wrap:wrap; }
+
+  .trust-row{ margin-top:38px; display:flex; gap:26px; flex-wrap:wrap; color:var(--text-dim); font-size:13px; }
+  .trust-row span{ display:flex; align-items:center; gap:7px; }
+  .trust-row .tick{ color:var(--pulse); }
+
+  /* --- hero visual: live-looking waveform monitor card --- */
+  .scope-card{
+    position:relative;
+    background:linear-gradient(160deg, var(--surface), var(--surface-2));
+    border:1px solid var(--line);
+    border-radius:var(--radius-card);
+    padding:26px 22px 22px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .scope-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .scope-head .label{ font-size:12.5px; color:var(--text-dim); letter-spacing:0.3px; }
+  .scope-head .bpm{ font-family:'Fraunces',serif; font-size:30px; color:var(--pulse); }
+  .scope-head .bpm sub{ font-size:13px; color:var(--text-dim); font-family:'IBM Plex Sans'; }
+  canvas#wave{ width:100%; height:140px; display:block; }
+  .scope-foot{ display:flex; justify-content:space-between; margin-top:10px; }
+  .metric{ text-align:left; }
+  .metric .v{ font-size:16px; font-weight:600; }
+  .metric .k{ font-size:11.5px; color:var(--text-dim); }
+
+  section.features{ padding:70px 0 40px; }
+  .section-lede{ max-width:52ch; margin-bottom:38px; }
+  .section-lede .kicker{ color:var(--pulse); font-size:14px; margin-bottom:10px; }
+  .section-lede h2{ font-family:'Fraunces',serif; font-size:clamp(1.7rem,3vw,2.3rem); font-weight:500; line-height:1.2; }
+
+  .feature-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius-card); overflow:hidden; }
+  @media (max-width:880px){ .feature-grid{ grid-template-columns:1fr; } }
+  .feature{ background:var(--surface); padding:28px 24px; }
+  .feature .ic{ width:34px; height:34px; margin-bottom:18px; color:var(--pulse); }
+  .feature h3{ font-size:16.5px; font-weight:600; margin-bottom:8px; }
+  .feature p{ font-size:14px; color:var(--text-dim); line-height:1.55; }
+
+  .auth-band{
+    margin:70px 0 90px;
+    display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;
+    background:var(--surface); border:1px solid var(--line); border-radius:24px;
+    padding:44px clamp(24px,4vw,56px);
+  }
+  @media (max-width:880px){ .auth-band{ grid-template-columns:1fr; } }
+  .auth-band h2{ font-family:'Fraunces',serif; font-weight:500; font-size:1.9rem; line-height:1.2; margin-bottom:14px; }
+  .auth-band p{ color:var(--text-dim); font-size:15px; line-height:1.6; max-width:40ch; }
+
+  .auth-card{ background:var(--surface-2); border:1px solid var(--line); border-radius:16px; padding:26px; }
+  .google-btn{
+    width:100%; background:#fff; color:#1f1f1f; border:none; border-radius:10px;
+    padding:12px 16px; font-family:inherit; font-size:14.5px; font-weight:500;
+    display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+  }
+  .fine{ font-size:12px; color:var(--text-dim); margin-top:14px; text-align:center; line-height:1.5; }
+
+  footer{ border-top:1px solid var(--line); padding:26px clamp(20px,5vw,64px); }
+  footer .inner{ max-width:1280px; margin:0 auto; display:flex; justify-content:space-between; color:var(--text-dim); font-size:13px; flex-wrap:wrap; gap:10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark"><span class="dot"></span>Cosmos&nbsp;Arogya</div>
+  <select id="langSelect" aria-label="Choose language">
+    <option value="en">English</option>
+    <option value="ta">தமிழ்</option>
+    <option value="hi">हिन्दी</option>
+    <option value="te">తెలుగు</option>
+    <option value="ml">മലയാളം</option>
+  </select>
+</header>
+
+<main>
+  <section class="hero">
+    <div>
+      <div class="eyebrow-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
+        Runs on your device — nothing leaves your phone
+      </div>
+      <h1 class="hero-title display">Understand every medicine, report, and hospital near you.</h1>
+      <p class="hero-sub">Point your camera at a strip, a prescription, or a lab report. Cosmos Arogya reads it, explains it in your language, and helps you find the right care nearby — without sending your health data anywhere.</p>
+      <div class="cta-row">
+        <button class="btn btn-primary" id="getStarted">Get started</button>
+        <button class="btn btn-ghost" id="seeHow">See how scanning works</button>
+      </div>
+      <div class="trust-row">
+        <span><span class="tick">✓</span> Free, on-device AI</span>
+        <span><span class="tick">✓</span> Works offline once installed</span>
+        <span><span class="tick">✓</span> 5 languages</span>
+      </div>
+    </div>
+
+    <div class="scope-card" id="scopeCard">
+      <div class="scope-head">
+        <span class="label">ESTIMATED PULSE · CAMERA</span>
+        <span class="bpm" id="bpmVal">72<sub> bpm</sub></span>
+      </div>
+      <canvas id="wave" width="600" height="140"></canvas>
+      <div class="scope-foot">
+        <div class="metric"><div class="v">Amoxicillin 500mg</div><div class="k">last scanned strip</div></div>
+        <div class="metric"><div class="v">3 nearby</div><div class="k">pharmacies open now</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="section-lede">
+      <div class="kicker display" style="font-family:'Fraunces',serif; font-style:italic;">What it does</div>
+      <h2>Three ways to make sense of your care, in one app.</h2>
+    </div>
+    <div class="feature-grid">
+      <div class="feature">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        <h3>Scan &amp; understand</h3>
+        <p>Medicine strips, handwritten prescriptions, and lab reports — photographed and explained: what it's for, dosage, side effects, and what an abnormal value means.</p>
+      </div>
+      <div class="feature">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <h3>Find the right care</h3>
+        <p>Nearby hospitals and pharmacies from OpenStreetMap, with what's known about their specialties — so you're not guessing which one to go to.</p>
+      </div>
+      <div class="feature">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v12H8l-4 4V4z"/></svg>
+        <h3>Ask, out loud</h3>
+        <p>A chat &amp; voice assistant for hospital choice, medicine questions, and treatment doubts — running locally, in Tamil, Hindi, Telugu, Malayalam or English.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="auth-band">
+    <div>
+      <h2 class="display">Your health record, tied to your Google account.</h2>
+      <p>Every scan, recommendation, and saved pharmacy is stored against your account, so it's there the next time you open the app — on any device.</p>
+    </div>
+    <div class="auth-card">
+      <button class="google-btn" id="googleSignIn">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.1 5.5 29.3 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.3-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13.5 24 13.5c3.1 0 5.8 1.1 8 3l6-6C34.1 5.5 29.3 3.5 24 3.5c-7.7 0-14.4 4.4-17.7 11.2z"/><path fill="#4CAF50" d="M24 44.5c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.4-4.6 2.4-7.2 2.4-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 40.1 16.2 44.5 24 44.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.2 5.2C40.9 35.9 44.5 30.4 44.5 24c0-1.2-.1-2.4-.9-3.5z"/></svg>
+        Continue with Google
+      </button>
+      <p class="fine">By continuing you agree this app supports — not replaces — advice from a qualified doctor.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="inner">
+    <span>© 2026 Cosmos Arogya</span>
+    <span>Not a substitute for professional medical advice.</span>
+  </div>
+</footer>
+
+<script>
+  // Live-looking ECG/pulse waveform — decorative + will be replaced by real rPPG data later
+  const canvas = document.getElementById('wave');
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  let t = 0;
+  function pulseY(x){
+    // synthetic PQRST-ish waveform
+    const cycle = 90;
+    const p = ((x + t) % cycle) / cycle;
+    let y = Math.sin(p * Math.PI * 2) * 3;
+    if (p > 0.44 && p < 0.5) y -= (p-0.44)/0.06 * 40;
+    if (p >= 0.5 && p < 0.56) y += (0.56-p)/0.06 * 48 - 8;
+    if (p > 0.6 && p < 0.72) y += Math.sin((p-0.6)/0.12*Math.PI) * 10;
+    return y;
+  }
+  function draw(){
+    const w = canvas.getBoundingClientRect().width;
+    const h = canvas.getBoundingClientRect().height;
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle = '#3fe0c5';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(63,224,197,0.6)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    for(let x=0; x<w; x++){
+      const y = h/2 - pulseY(x)*1.4;
+      if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    t += 1.6;
+    requestAnimationFrame(draw);
+  }
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) draw();
+  else { const w=canvas.getBoundingClientRect().width, h=canvas.getBoundingClientRect().height; ctx.strokeStyle='#3fe0c5'; ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke(); }
+
+  // subtle bpm flicker for life-like feel
+  const bpmEl = document.getElementById('bpmVal');
+  setInterval(()=>{
+    const base = 72 + Math.round(Math.random()*3 - 1);
+    bpmEl.innerHTML = base + '<sub> bpm</sub>';
+  }, 2200);
+
+  document.getElementById('getStarted').addEventListener('click', ()=>{
+    document.querySelector('.auth-band').scrollIntoView({behavior:'smooth'});
+  });
+  document.getElementById('seeHow').addEventListener('click', ()=>{
+    document.querySelector('.features').scrollIntoView({behavior:'smooth'});
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    });
+  }
+</script>
+<script type="module">
+  import { signInWithGoogle, watchAuth } from '/js/firebase.js';
+
+  // If already signed in, skip the landing page and go straight to the dashboard
+  watchAuth((user) => { if (user) window.location.href = '/app.html'; });
+
+  document.getElementById('googleSignIn').addEventListener('click', async () => {
+    const btn = document.getElementById('googleSignIn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+      await signInWithGoogle();
+      window.location.href = '/app.html';
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>Continue with Google</span>';
+      alert('Sign-in failed: ' + err.message + '\n\nMake sure the Firebase config in /js/firebase.js has been filled in with your project\'s real keys.');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "cosmos-arogya",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered medical companion PWA — free, on-device, multilingual.",
+  "scripts": {
+    "dev": "npx serve public -l 3000"
+  }
+}

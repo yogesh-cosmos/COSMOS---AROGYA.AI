@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Cosmos Arogya — Dashboard</title>
+<meta name="theme-color" content="#06090b" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+  body{ height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px clamp(16px,3vw,32px);
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .profile{ display:flex; align-items:center; gap:10px; }
+  .profile img{ width:32px; height:32px; border-radius:50%; border:1px solid var(--line); }
+  .profile .name{ font-size:14px; }
+  .profile .email{ font-size:12px; color:var(--text-dim); }
+  #signOutBtn{ background:none; border:1px solid var(--line); color:var(--text-dim); font-size:13px; padding:7px 14px; border-radius:var(--radius-pill); cursor:pointer; }
+  #signOutBtn:hover{ color:var(--text); border-color:var(--pulse-dim); }
+
+  nav.tabs{
+    display:flex; gap:4px; padding:0 clamp(16px,3vw,32px);
+    border-bottom:1px solid var(--line); flex-shrink:0; overflow-x:auto;
+  }
+  .tab{
+    padding:14px 18px; font-size:14px; color:var(--text-dim); cursor:pointer;
+    border-bottom:2px solid transparent; white-space:nowrap; background:none; border-top:none; border-left:none; border-right:none;
+    font-family:inherit;
+  }
+  .tab.active{ color:var(--text); border-bottom-color:var(--pulse); }
+  .tab[disabled]{ opacity:0.4; cursor:not-allowed; }
+  .tab .soon{ font-size:10px; background:var(--surface-2); padding:2px 6px; border-radius:6px; margin-left:6px; color:var(--text-dim); }
+
+  main{ flex:1; overflow:hidden; display:none; }
+  main.active{ display:flex; }
+
+  /* --- Hospitals panel --- */
+  #hospitalsPanel{ flex-direction:row; width:100%; }
+  .h-sidebar{
+    width:380px; flex-shrink:0; border-right:1px solid var(--line);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  @media (max-width:820px){
+    #hospitalsPanel{ flex-direction:column; }
+    .h-sidebar{ width:100%; height:46%; border-right:none; border-bottom:1px solid var(--line); }
+  }
+  .search-block{ padding:16px; border-bottom:1px solid var(--line); }
+  .search-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .search-row input{
+    flex:1; background:var(--surface-2); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:10px; font-family:inherit; font-size:14px;
+  }
+  .search-row input:focus{ outline:1px solid var(--pulse); }
+  .icon-btn{
+    background:var(--surface-2); border:1px solid var(--line); color:var(--text);
+    padding:10px 13px; border-radius:10px; cursor:pointer; font-size:14px;
+  }
+  .icon-btn:hover{ border-color:var(--pulse-dim); }
+  .chip-row{ display:flex; gap:7px; flex-wrap:wrap; }
+  .chip{
+    font-size:12.5px; padding:6px 12px; border-radius:var(--radius-pill);
+    border:1px solid var(--line); background:transparent; color:var(--text-dim); cursor:pointer;
+  }
+  .chip.active{ background:var(--pulse); color:#03211c; border-color:var(--pulse); }
+
+  #placesList{ flex:1; overflow-y:auto; padding:8px; }
+  .place-card{
+    padding:14px; border-radius:12px; margin-bottom:6px; cursor:pointer;
+    border:1px solid transparent;
+  }
+  .place-card:hover{ background:var(--surface-2); }
+  .place-card.selected{ background:var(--surface-2); border-color:var(--pulse-dim); }
+  .place-card .top{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+  .place-card .name{ font-size:14.5px; font-weight:500; }
+  .place-card .dist{ font-size:12px; color:var(--pulse); white-space:nowrap; }
+  .place-card .kind{ font-size:11.5px; text-transform:capitalize; color:var(--text-dim); margin-top:3px; }
+  .place-card .meta{ font-size:12.5px; color:var(--text-dim); margin-top:6px; line-height:1.5; }
+  .place-card .save-btn{
+    margin-top:9px; font-size:12px; background:none; border:1px solid var(--line);
+    color:var(--text-dim); padding:5px 11px; border-radius:var(--radius-pill); cursor:pointer;
+  }
+  .place-card .save-btn:hover{ color:var(--pulse); border-color:var(--pulse-dim); }
+  .place-card .save-btn.saved{ color:var(--pulse); border-color:var(--pulse-dim); }
+
+  .state-msg{ padding:30px 16px; text-align:center; color:var(--text-dim); font-size:13.5px; line-height:1.6; }
+  .state-msg .big{ font-size:28px; margin-bottom:10px; }
+
+  #map{ flex:1; background:var(--surface); }
+  .leaflet-popup-content-wrapper{ background:var(--surface-2); color:var(--text); border-radius:10px; }
+  .leaflet-popup-tip{ background:var(--surface-2); }
+  .popup-name{ font-weight:600; font-size:13.5px; margin-bottom:4px; }
+  .popup-meta{ font-size:12px; color:var(--text-dim); }
+
+  /* --- Coming soon panels --- */
+  .soon-panel{ width:100%; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:var(--text-dim); text-align:center; padding:40px; }
+  .soon-panel h2{ font-family:'Fraunces',serif; color:var(--text); font-size:1.6rem; font-weight:500; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/index.html" class="wordmark"><span class="dot"></span>Cosmos&nbsp;Arogya</a>
+  <div class="profile" id="profileBox">
+    <img id="profilePhoto" src="" alt="" style="display:none;">
+    <div>
+      <div class="name" id="profileName">Loading…</div>
+      <div class="email" id="profileEmail"></div>
+    </div>
+    <button id="signOutBtn">Sign out</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab" data-tab="scanner" disabled>Scanner <span class="soon">Phase 3</span></button>
+  <button class="tab active" data-tab="hospitals">Hospitals &amp; Pharmacies</button>
+  <button class="tab" data-tab="chat" disabled>Ask Arogya <span class="soon">Phase 5</span></button>
+</nav>
+
+<main class="active" id="hospitalsPanel">
+  <div class="h-sidebar">
+    <div class="search-block">
+      <div class="search-row">
+        <input type="text" id="placeInput" placeholder="Search an area (e.g. Anna Nagar, Chennai)">
+        <button class="icon-btn" id="useLocationBtn" title="Use my current location">📍</button>
+        <button class="icon-btn" id="searchBtn" title="Search">Go</button>
+      </div>
+      <div class="chip-row" id="chipRow">
+        <button class="chip active" data-kind="all">All</button>
+        <button class="chip" data-kind="hospital">Hospitals</button>
+        <button class="chip" data-kind="pharmacy">Pharmacies</button>
+        <button class="chip" data-kind="clinic">Clinics</button>
+        <button class="chip" data-kind="doctors">Doctors</button>
+      </div>
+    </div>
+    <div id="placesList">
+      <div class="state-msg"><div class="big">📍</div>Tap the location icon, or search an area, to find hospitals and pharmacies near you.</div>
+    </div>
+  </div>
+  <div id="map"></div>
+</main>
+
+<main id="scannerPanel" class="soon-panel">
+  <h2 class="display">Scanner arrives in Phase 3</h2>
+  <p>Point-and-scan for medicines, prescriptions, and lab reports is next on the roadmap.</p>
+</main>
+
+<main id="chatPanel" class="soon-panel">
+  <h2 class="display">Ask Arogya arrives in Phase 5</h2>
+  <p>A local, multilingual AI chat for hospital and treatment questions is coming.</p>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script type="module">
+  import { auth, watchAuth, signOutUser, savePlaceForUser, getUserData } from '/js/firebase.js';
+  import { findNearbyPlaces, geocodePlace, getBrowserLocation } from '/js/hospitals.js';
+
+  // ---- Auth guard ----
+  let currentUser = null;
+  let savedIds = new Set();
+
+  watchAuth(async (user) => {
+    if (!user) { window.location.href = '/index.html'; return; }
+    currentUser = user;
+    document.getElementById('profileName').textContent = user.displayName || 'You';
+    document.getElementById('profileEmail').textContent = user.email || '';
+    if (user.photoURL) {
+      const img = document.getElementById('profilePhoto');
+      img.src = user.photoURL; img.style.display = 'block';
+    }
+    const data = await getUserData(user.uid).catch(() => null);
+    if (data?.savedPlaces) savedIds = new Set(data.savedPlaces.map(p => p.id));
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', async () => {
+    await signOutUser();
+    window.location.href = '/index.html';
+  });
+
+  // ---- Tabs ----
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      if (tab.disabled) return;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('main').forEach(m => m.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
+      if (tab.dataset.tab === 'hospitals' && map) setTimeout(() => map.invalidateSize(), 50);
+    });
+  });
+
+  // ---- Map ----
+  const map = L.map('map', { zoomControl: true }).setView([13.0827, 80.2707], 12); // default: Chennai
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    maxZoom: 19
+  }).addTo(map);
+
+  let markers = [];
+  let currentPlaces = [];
+  let activeKind = 'all';
+  let originPoint = null;
+
+  function clearMarkers(){ markers.forEach(m => map.removeLayer(m)); markers = []; }
+
+  function kindEmoji(kind){
+    return { hospital:'🏥', pharmacy:'💊', clinic:'⚕️', doctors:'🩺' }[kind] || '📍';
+  }
+
+  function renderList(places){
+    const list = document.getElementById('placesList');
+    if (!places.length){
+      list.innerHTML = `<div class="state-msg"><div class="big">🔍</div>No results in this area. Try a larger search or a different spot.</div>`;
+      return;
+    }
+    list.innerHTML = '';
+    places.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'place-card';
+      el.dataset.id = p.id;
+      const saved = savedIds.has(p.id);
+      el.innerHTML = `
+        <div class="top"><span class="name">${kindEmoji(p.kind)} ${escapeHtml(p.name)}</span><span class="dist">${p.distanceKm.toFixed(1)} km</span></div>
+        <div class="kind">${p.kind}${p.speciality ? ' · ' + escapeHtml(p.speciality) : ''}${p.emergency ? ' · 24h emergency' : ''}</div>
+        <div class="meta">${p.address ? escapeHtml(p.address) : 'Address not mapped yet'}${p.phone ? '<br>' + escapeHtml(p.phone) : ''}</div>
+        <button class="save-btn ${saved ? 'saved' : ''}" data-id="${p.id}">${saved ? '✓ Saved' : '+ Save'}</button>
+      `;
+      el.addEventListener('click', (e) => {
+        if (e.target.classList.contains('save-btn')) return;
+        map.setView([p.lat, p.lon], 16);
+        markers.find(m => m._placeId === p.id)?.openPopup();
+        document.querySelectorAll('.place-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+      });
+      el.querySelector('.save-btn').addEventListener('click', async () => {
+        if (!currentUser) return;
+        await savePlaceForUser(currentUser.uid, { id: p.id, name: p.name, kind: p.kind, lat: p.lat, lon: p.lon });
+        savedIds.add(p.id);
+        el.querySelector('.save-btn').textContent = '✓ Saved';
+        el.querySelector('.save-btn').classList.add('saved');
+      });
+      list.appendChild(el);
+    });
+  }
+
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function plotMarkers(places){
+    clearMarkers();
+    places.forEach(p => {
+      const marker = L.circleMarker([p.lat, p.lon], {
+        radius: 7, color: '#3fe0c5', fillColor: '#3fe0c5', fillOpacity: 0.85, weight: 1.5
+      }).addTo(map);
+      marker._placeId = p.id;
+      marker.bindPopup(`<div class="popup-name">${kindEmoji(p.kind)} ${escapeHtml(p.name)}</div><div class="popup-meta">${p.kind} · ${p.distanceKm.toFixed(1)} km away</div>`);
+      markers.push(marker);
+    });
+    if (originPoint) {
+      const originMarker = L.circleMarker([originPoint.lat, originPoint.lon], {
+        radius: 6, color: '#7c86ff', fillColor: '#7c86ff', fillOpacity: 1, weight: 2
+      }).addTo(map).bindPopup('You are here');
+      markers.push(originMarker);
+    }
+  }
+
+  async function runSearch(point){
+    originPoint = point;
+    const list = document.getElementById('placesList');
+    list.innerHTML = `<div class="state-msg">Searching nearby…</div>`;
+    try {
+      const places = await findNearbyPlaces(point.lat, point.lon, 4000);
+      currentPlaces = places;
+      map.setView([point.lat, point.lon], 14);
+      applyFilterAndRender();
+    } catch (err) {
+      list.innerHTML = `<div class="state-msg">${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function applyFilterAndRender(){
+    const filtered = activeKind === 'all' ? currentPlaces : currentPlaces.filter(p => p.kind === activeKind);
+    renderList(filtered);
+    plotMarkers(filtered);
+  }
+
+  document.getElementById('useLocationBtn').addEventListener('click', async () => {
+    const list = document.getElementById('placesList');
+    list.innerHTML = `<div class="state-msg">Getting your location…</div>`;
+    try {
+      const point = await getBrowserLocation();
+      await runSearch(point);
+    } catch (err) {
+      list.innerHTML = `<div class="state-msg">${escapeHtml(err.message)}</div>`;
+    }
+  });
+
+  async function searchByText(){
+    const q = document.getElementById('placeInput').value.trim();
+    if (!q) return;
+    const list = document.getElementById('placesList');
+    list.innerHTML = `<div class="state-msg">Looking up "${escapeHtml(q)}"…</div>`;
+    try {
+      const point = await geocodePlace(q);
+      await runSearch(point);
+    } catch (err) {
+      list.innerHTML = `<div class="state-msg">${escapeHtml(err.message)}</div>`;
+    }
+  }
+  document.getElementById('searchBtn').addEventListener('click', searchByText);
+  document.getElementById('placeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchByText(); });
+
+  document.getElementById('chipRow').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    activeKind = btn.dataset.kind;
+    applyFilterAndRender();
+  });
+</script>
+</body>
+</html>
